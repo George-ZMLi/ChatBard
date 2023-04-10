@@ -17,14 +17,36 @@ def main():
 	# config = configparser.ConfigParser()
 	# config.read('config.ini')
 	# updater = Updater(token=(config['TELEGRAM']['ACCESS_TOKEN']), use_context=True)
-	# redis1 = redis.Redis(host=(config['REDIS']['HOST']), password=(config['REDIS']['PASSWORD']),
-	# 					 port=(config['REDIS']['REDISPORT']))
+	# # redis1 = redis.Redis(host=(config['REDIS']['HOST']), password=(config['REDIS']['PASSWORD']),
+	# # 					 port=(config['REDIS']['REDISPORT']))
+	# redis1 = redis.Redis(
+	# 	host=(config['REDIS']['HOST']),
+	# 	password=(config['REDIS']['PASSWORD']),
+	# 	port=(config['REDIS']['REDISPORT']),
+	# 	db=0,
+	# 	ssl=True,
+	# 	ssl_cert_reqs=None
+	# )
+	# gptapi = (config['OPENAI']['GPTAPIKEY'])
+
 
 	updater = Updater(token=(os.environ['ACCESS_TOKEN']), use_context=True)
-	redis1 = redis.Redis(host=(os.environ['HOST']), password=(os.environ['PASSWORD']), port=(os.environ['REDISPORT']))
+	# redis1 = redis.Redis(host=(os.environ['HOST']), password=(os.environ['PASSWORD']), port=(os.environ['REDISPORT']))
+	redis1 = redis.Redis(
+		host=(os.environ['HOST']),
+		port=(os.environ['REDISPORT']),
+		db=0,
+		password=(os.environ['PASSWORD']),
+		ssl=True,
+		ssl_cert_reqs=None
+	)
 	gptapi = os.environ['GPTAPIKEY']
-	print(type(gptapi))
-	print(gptapi)
+
+	# print(redis1.ping())
+	if not redis1.ping():
+		print("redis server down")
+
+
 
 	dispatcher = updater.dispatcher
 	# You can set this logging module, so you will know when and why things do not work as expected
@@ -92,28 +114,19 @@ def history_handler(update: Update, context: CallbackContext) -> None:
 	"""Send a message when the command /history is issued."""
 	# Get the message history from Redis
 	message_history = redis1.lrange('message_history', 0, -1)
-
 	# Send the message history back to the user
-	message_history_text = "\n".join([message.decode('utf-8') for message in message_history])
-	context.bot.send_message(chat_id=update.effective_chat.id, text=message_history_text)
+	if len(message_history) == 0:
+		message_history = ["History is empty."]
+		context.bot.send_message(chat_id=update.effective_chat.id, text=message_history[0])
+	else:
+		message_history_text = "\n".join([message.decode('utf-8') for message in message_history])
+		context.bot.send_message(chat_id=update.effective_chat.id, text=message_history_text)
 
 
 def clear(update: Update, context: CallbackContext) -> None:
 	"""Send a message when the command /clear is issued."""
 	redis1.flushdb()
 	update.message.reply_text('Chat history cleared.')
-
-
-# def gpt(update: Update, context: CallbackContext) -> None:
-# 	"""Send a message when the command /c is issued"""
-# 	try:
-# 		logging.info(context.args[0])
-# 		msg = context.args[0]
-# 		# redis1.incr(msg)
-# 		gpt = ChatGPT.GPT_req(msg)
-# 		update.message.reply_text(gpt)
-# 	except (IndexError, ValueError):
-# 		update.message.reply_text('Usage: /c <keyword>, c is lower case')
 
 
 if __name__ == '__main__':
