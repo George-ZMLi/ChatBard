@@ -3,8 +3,6 @@ import openai
 
 def GPT_req(user_input, apikey):
     openai.api_key = apikey
-    organizationname = "Personal"
-    organizationid = "org-IbbDYmOFQJzMayHUBHzjCvWS"
 
     model_engine = "text-davinci-003"
 
