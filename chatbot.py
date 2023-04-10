@@ -36,13 +36,15 @@ def main():
 	dispatcher.add_handler(CommandHandler("add", add))
 	dispatcher.add_handler(CommandHandler("help", help_command))
 	dispatcher.add_handler(CommandHandler("hello", hello))
+	dispatcher.add_handler(CommandHandler('history', history_handler))
+	dispatcher.add_handler(CommandHandler('clear', clear))
 	# dispatcher.add_handler(CommandHandler("c", gpt))
 	# To start the bot:
 	updater.start_polling()
 	updater.idle()
 
 
-def echo(update, context):
+def echo(update, context: CallbackContext) -> None:
 	# reply_message = update.message.text.upper()
 	# logging.info("Update: " + str(update))
 	# logging.info("context: " + str(context))
@@ -51,6 +53,7 @@ def echo(update, context):
 	# context. Error handlers also receive the raised TelegramError object in error.
 	try:
 		msg = update.message.text
+		redis1.rpush('message_history', msg)
 		logging.info("Update: " + str(update))
 		logging.info("context: " + str(context))
 		reply_message = ChatGPT.GPT_req(msg, gptapi)
@@ -60,8 +63,6 @@ def echo(update, context):
 			context.bot.send_message(chat_id=update.effective_chat.id, text="GPT isn't working, please try it again")
 	except (IndexError, ValueError):
 		update.message.reply_text('')
-
-
 
 
 def help_command(update: Update, context: CallbackContext) -> None:
@@ -85,6 +86,22 @@ def add(update: Update, context: CallbackContext) -> None:
 		update.message.reply_text('You have said ' + msg + ' for ' + redis1.get(msg).decode('UTF-8') + ' times.')
 	except (IndexError, ValueError):
 		update.message.reply_text('Usage: /add <keyword>')
+
+
+def history_handler(update: Update, context: CallbackContext) -> None:
+	"""Send a message when the command /history is issued."""
+	# Get the message history from Redis
+	message_history = redis1.lrange('message_history', 0, -1)
+
+	# Send the message history back to the user
+	message_history_text = "\n".join([message.decode('utf-8') for message in message_history])
+	context.bot.send_message(chat_id=update.effective_chat.id, text=message_history_text)
+
+
+def clear(update: Update, context: CallbackContext) -> None:
+	"""Send a message when the command /clear is issued."""
+	redis1.flushdb()
+	update.message.reply_text('Chat history cleared.')
 
 
 # def gpt(update: Update, context: CallbackContext) -> None:
