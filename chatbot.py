@@ -23,6 +23,8 @@ def main():
 	updater = Updater(token=(os.environ['ACCESS_TOKEN']), use_context=True)
 	redis1 = redis.Redis(host=(os.environ['HOST']), password=(os.environ['PASSWORD']), port=(os.environ['REDISPORT']))
 	gptapi = os.environ['GPTAPIKEY']
+	print(type(gptapi))
+	print(gptapi)
 
 	dispatcher = updater.dispatcher
 	# You can set this logging module, so you will know when and why things do not work as expected
