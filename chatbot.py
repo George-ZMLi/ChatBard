@@ -7,10 +7,11 @@ import redis
 import os
 
 global redis1
-
+global gptapi
 
 def main():
 	global redis1
+	global gptapi
 	# Load your token and create an Updater for your Bot
 
 	# config = configparser.ConfigParser()
@@ -21,6 +22,7 @@ def main():
 
 	updater = Updater(token=(os.environ['ACCESS_TOKEN']), use_context=True)
 	redis1 = redis.Redis(host=(os.environ['HOST']), password=(os.environ['PASSWORD']), port=(os.environ['REDISPORT']))
+	gptapi = os.environ['GPTAPIKEY']
 
 	dispatcher = updater.dispatcher
 	# You can set this logging module, so you will know when and why things do not work as expected
@@ -49,7 +51,7 @@ def echo(update, context):
 		msg = update.message.text
 		logging.info("Update: " + str(update))
 		logging.info("context: " + str(context))
-		reply_message = ChatGPT.GPT_req(msg)
+		reply_message = ChatGPT.GPT_req(msg, gptapi)
 		if reply_message != "" or None:
 			context.bot.send_message(chat_id=update.effective_chat.id, text=reply_message)
 		else:

@@ -1,8 +1,8 @@
 import openai
 
 
-def GPT_req(user_input):
-    openai.api_key = "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"
+def GPT_req(user_input, apikey):
+    openai.api_key = apikey
     organizationname = "Personal"
     organizationid = "org-IbbDYmOFQJzMayHUBHzjCvWS"
 
