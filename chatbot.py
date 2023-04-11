@@ -1,3 +1,4 @@
+
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 import ChatGPT
@@ -5,6 +6,7 @@ import configparser
 import logging
 import redis
 import os
+import time
 
 global redis1
 global gptapi
@@ -29,8 +31,6 @@ def main():
 	# )
 	# gptapi = (config['OPENAI']['GPTAPIKEY'])
 
-
-	updater = Updater(token=(os.environ['ACCESS_TOKEN']), use_context=True)
 	# redis1 = redis.Redis(host=(os.environ['HOST']), password=(os.environ['PASSWORD']), port=(os.environ['REDISPORT']))
 	redis1 = redis.Redis(
 		host=(os.environ['HOST']),
@@ -40,30 +40,60 @@ def main():
 		ssl=True,
 		ssl_cert_reqs=None
 	)
-	gptapi = os.environ['GPTAPIKEY']
 
+	# 连接到 Redis 服务器
 	# print(redis1.ping())
-	if not redis1.ping():
+	ping = redis1.ping()
+	if not ping:
 		print("redis server down")
+		# logging.info("Redis server down")
+	else:
+		print("redis server up")
+		# logging.info("Redis Server up")
+
+	# 尝试获取锁
+	lock_acquired = redis1.set('mylock', 1, nx=True, ex=10)
+	# logging.info("Lock_acquired: " + str(lock_acquired))
+
+	if lock_acquired:
+		# 获取锁成功，执行操作
+		# 调用 Telegram chatbot 实例并与其通信
+		updater = Updater(token=(os.environ['ACCESS_TOKEN']), use_context=True)
+		gptapi = os.environ['GPTAPIKEY']
 
 
 
-	dispatcher = updater.dispatcher
-	# You can set this logging module, so you will know when and why things do not work as expected
-	logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
-	# register a dispatcher to handle message: here we register an echo dispatcher
-	echo_handler = MessageHandler(Filters.text & (~Filters.command), echo)
-	dispatcher.add_handler(echo_handler)
-	# on different commands - answer in Telegram
-	dispatcher.add_handler(CommandHandler("add", add))
-	dispatcher.add_handler(CommandHandler("help", help_command))
-	dispatcher.add_handler(CommandHandler("hello", hello))
-	dispatcher.add_handler(CommandHandler('history', history_handler))
-	dispatcher.add_handler(CommandHandler('clear', clear))
-	# dispatcher.add_handler(CommandHandler("c", gpt))
-	# To start the bot:
-	updater.start_polling()
-	updater.idle()
+		dispatcher = updater.dispatcher
+		# You can set this logging module, so you will know when and why things do not work as expected
+		logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+		# register a dispatcher to handle message: here we register an echo dispatcher
+		echo_handler = MessageHandler(Filters.text & (~Filters.command), echo)
+		dispatcher.add_handler(echo_handler)
+		# on different commands - answer in Telegram
+		dispatcher.add_handler(CommandHandler("add", add))
+		dispatcher.add_handler(CommandHandler("help", help_command))
+		dispatcher.add_handler(CommandHandler("hello", hello))
+		dispatcher.add_handler(CommandHandler('history', history_handler))
+		dispatcher.add_handler(CommandHandler('clear', clear))
+		# dispatcher.add_handler(CommandHandler("c", gpt))
+		# To start the bot:
+		updater.start_polling()
+		updater.idle()
+
+		# 停止 Updater 实例
+		updater.stop()
+
+		# 删除 Updater 实例
+		del updater
+
+		# 完成操作后，释放锁
+		redis1.delete('mylock')
+	else:
+		# 获取锁失败，锁已被其他客户端持有
+		time.sleep(10)
+
+
+
 
 
 def echo(update, context: CallbackContext) -> None:

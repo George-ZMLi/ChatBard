@@ -1,0 +1,27 @@
+version: '3'
+services:
+  chatbot:
+    image: chatbard
+    environment:
+      ACCESS_TOKEN: 6125927916:AAE-21Vy3t3cDSgjaXoeQtWoq3_lmE1quQA
+      GPTAPIKEY: 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
+      HOST: redis
+      PASSWORD: comp7940passwordlab8
+      REDISPORT: 6379
+    entrypoint: python chatbot.py
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          cpus: "0.1"
+          memory: '50M'
+      restart_policy:
+        condition: on-failure
+
+    depends_on:
+      - redis
+  redis:
+    image: redis
+    volumes:
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+    command: ["/usr/local/etc/redis/redis.conf"]
