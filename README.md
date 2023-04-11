@@ -8,4 +8,4 @@ The environment variables you need to set are listed below:
 	PASSWORD: "Your Redis cloud server password"
 	REDISPORT: "Your Redis cloud server port"
 	GPTAPIKEY: "Your openai gpt api-key"
-	GOOGLE_APPLICATION_CREDENTIALS: "Your google application redentials json file paht"
+	GOOGLE_APPLICATION_CREDENTIALS: "Your google application credentials json file paht"
