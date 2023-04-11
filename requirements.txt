@@ -3,3 +3,6 @@ python-telegram-bot==13.7
 configparser
 redis
 openai
+google
+google-cloud-speech
+google-cloud-texttospeech
