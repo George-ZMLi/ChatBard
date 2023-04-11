@@ -1,6 +1,0 @@
-*.ini
-*.yaml
-.idea/
-__pycache__/
-*.swp
-.conf
